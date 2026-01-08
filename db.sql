@@ -1,0 +1,18 @@
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE seats (
+  id SERIAL PRIMARY KEY,
+  seat_number TEXT NOT NULL,
+  is_booked BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE seat_locks (
+  id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(id) ON DELETE CASCADE,
+  seat_id INT UNIQUE REFERENCES seats(id) ON DELETE CASCADE,
+  expires_at TIMESTAMP NOT NULL
+);
