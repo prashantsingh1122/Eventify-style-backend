@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: seatsafe-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: seatsafe
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - seatsafe-network
+
+  app:
+    build: .
+    container_name: seatsafe-app
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/seatsafe
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: seatsafe
+      DB_PORT: 5432
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    networks:
+      - seatsafe-network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+
+networks:
+  seatsafe-network:
+    driver: bridge
