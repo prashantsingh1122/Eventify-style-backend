@@ -4,7 +4,7 @@ async function lockSeat(userId, seatId) {
     const client = await pool.connect();
 
     try {
-        await client.query("Begin");
+        await client.query("BEGIN");
         //Check if seat is already booked 
         const seatResult = await client.query(
             "Select is_booked FROM seats WHERE id = $1 FOR UPDATE",
@@ -19,6 +19,7 @@ async function lockSeat(userId, seatId) {
         }
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000); //15 minutes from now
 
+        
         await client.query(
             `INSERT INTO seat_locks (user_id, seat_id, expires_at)
         VALUES ($1,$2,$3)`,
@@ -36,5 +37,35 @@ async function lockSeat(userId, seatId) {
         client.release();
     }
 
+}
+async function confirmSeatBooking(userId, seatId) {
+    const client = await pool.connect();
+    try{
+        await client.query("BEGIN");
+        
+        const lockResult= await client.query(
+            `SELECT * FROM seat_locks
+            WHERE user_id=$1 AND seat_id=$2 AND expires_at > NOW() 
+            FOR UPDATE`,
+            [userId, seatId]
+        );
+        if (lockResult.rows.length===0){
+            throw new Error("No valid lock found for this seat and user");
+        }
+        await client.query(
+            `UPDATE seats SET is_booked=true WHERE id=$1`,
+            [seatId]
+        );
+        await client.query(
+            `DELETE FROM seat_locks WHERE user_id=$1 AND seat_id=$2`,
+            [userId, seatId]
+        );
+        await client.query("COMMIT");
+    } catch (error){
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();   
+    }
 }
 module.exports = { lockSeat };
