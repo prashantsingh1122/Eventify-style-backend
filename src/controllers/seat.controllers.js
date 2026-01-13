@@ -13,4 +13,13 @@ async function lockSeatHandler(req,res) {
 
     }
 }
-module.exports={lockSeatHandler};
+async function confirmSeatBookingHandler(req,res){
+    const {userId, seatId}= req.body;
+    try{
+        await confirmSeatBooking(userId, seatId);
+        res.status(200).json({message:"Seat booking confirmed successfully"});
+    } catch (error){
+        res.status(500).json({error: error.message});
+    }
+}
+module.exports={lockSeatHandler, confirmSeatBookingHandler};

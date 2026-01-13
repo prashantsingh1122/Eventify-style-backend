@@ -68,4 +68,4 @@ async function confirmSeatBooking(userId, seatId) {
         client.release();   
     }
 }
-module.exports = { lockSeat };
+module.exports = { lockSeat, confirmSeatBooking };
